@@ -74,16 +74,83 @@
                 <div class="form-error"></div>
               </div>
               <div class="form-group">
-                <label for="age">سن <span class="optional">(اختیاری)</span></label>
-                <input type="number" id="age" name="age" class="form-control" min="16" max="80" inputmode="numeric">
+                <label for="age">سن <span class="required">*</span></label>
+                <input type="number" id="age" name="age" class="form-control" required min="18" max="80" inputmode="numeric">
+                <div class="form-hint">حداقل ۱۸ سال</div>
                 <div class="form-error"></div>
               </div>
             </div>
 
             <div class="form-group">
-              <label for="residence_area">شهر و محدوده سکونت <span class="required">*</span></label>
-              <input type="text" id="residence_area" name="residence_area" class="form-control" required placeholder="مثال: تهران، منطقه ۵ — جنت‌آباد" maxlength="150">
+              <label>جنسیت <span class="required">*</span></label>
+              <div class="radio-group">
+                <label class="radio-item">
+                  <input type="radio" name="gender" value="مرد" required>
+                  <span>مرد</span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="gender" value="زن">
+                  <span>زن</span>
+                </label>
+              </div>
               <div class="form-error"></div>
+            </div>
+
+            <div class="form-group">
+              <label>شهر و محدوده سکونت <span class="required">*</span></label>
+              <div class="radio-group">
+                <label class="radio-item">
+                  <input type="radio" name="residence_city" value="بومهن" required>
+                  <span>بومهن</span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="residence_city" value="رودهن">
+                  <span>رودهن</span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="residence_city" value="پردیس">
+                  <span>پردیس</span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="residence_city" value="other">
+                  <span>محدوده دیگر</span>
+                </label>
+              </div>
+              <div class="form-error"></div>
+              <div id="residence-other-wrap" class="form-group" style="display:none;margin-top:0.75rem;">
+                <label for="residence_other">محدوده سکونت خود را وارد کنید <span class="required">*</span></label>
+                <input type="text" id="residence_other" name="residence_other" class="form-control" placeholder="مثال: تهران، جنت‌آباد" maxlength="150">
+                <div class="form-error"></div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>داشتن وسیله نقلیه برای بازدیدها <span class="required">*</span></label>
+              <div class="radio-group">
+                <label class="radio-item">
+                  <input type="radio" name="has_vehicle" value="دارم" required>
+                  <span>دارم</span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="has_vehicle" value="ندارم">
+                  <span>ندارم</span>
+                </label>
+              </div>
+              <div class="form-error"></div>
+              <div id="vehicle-type-wrap" class="form-group" style="display:none;margin-top:0.75rem;">
+                <label>نوع وسیله نقلیه <span class="required">*</span></label>
+                <div class="radio-group">
+                  <label class="radio-item">
+                    <input type="radio" name="vehicle_type" value="موتور">
+                    <span>موتور دارم</span>
+                  </label>
+                  <label class="radio-item">
+                    <input type="radio" name="vehicle_type" value="ماشین">
+                    <span>ماشین دارم</span>
+                  </label>
+                </div>
+                <div class="form-error"></div>
+              </div>
             </div>
           </div>
 
