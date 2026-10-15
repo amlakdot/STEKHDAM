@@ -1,44 +1,43 @@
 /**
- * پنل مدیریت — admin.html
- * فقط کاربران احراز هویت‌شده با نقش ادمین به داده‌ها دسترسی دارند (RLS).
+ * پنل مدیریت — فقط فرانت‌اند، بدون سرویس خارجی
  */
 (function () {
   'use strict';
 
-  const loginSection = document.getElementById('login-section');
-  const dashboardSection = document.getElementById('dashboard-section');
-  const loginForm = document.getElementById('login-form');
-  const loginAlert = document.getElementById('login-alert');
-  const logoutBtn = document.getElementById('logout-btn');
-  const adminEmailEl = document.getElementById('admin-email');
+  var loginSection = document.getElementById('login-section');
+  var dashboardSection = document.getElementById('dashboard-section');
+  var loginForm = document.getElementById('login-form');
+  var loginAlert = document.getElementById('login-alert');
+  var logoutBtn = document.getElementById('logout-btn');
 
-  const statsTotal = document.getElementById('stat-total');
-  const statsNew = document.getElementById('stat-new');
-  const statsInterview = document.getElementById('stat-interview');
-  const statsAccepted = document.getElementById('stat-accepted');
+  var statsTotal = document.getElementById('stat-total');
+  var statsNew = document.getElementById('stat-new');
+  var statsInterview = document.getElementById('stat-interview');
+  var statsAccepted = document.getElementById('stat-accepted');
 
-  const tableBody = document.getElementById('apps-tbody');
-  const emptyState = document.getElementById('empty-state');
-  const loadingState = document.getElementById('loading-state');
-  const paginationEl = document.getElementById('pagination');
+  var tableBody = document.getElementById('apps-tbody');
+  var emptyState = document.getElementById('empty-state');
+  var loadingState = document.getElementById('loading-state');
+  var paginationEl = document.getElementById('pagination');
 
-  const searchInput = document.getElementById('search-input');
-  const filterStatus = document.getElementById('filter-status');
-  const filterExp = document.getElementById('filter-experience');
-  const exportBtn = document.getElementById('export-csv');
+  var searchInput = document.getElementById('search-input');
+  var filterStatus = document.getElementById('filter-status');
+  var filterExp = document.getElementById('filter-experience');
+  var exportBtn = document.getElementById('export-csv');
 
-  const modalOverlay = document.getElementById('detail-modal');
-  const modalBody = document.getElementById('modal-body');
-  const modalTitle = document.getElementById('modal-title');
-  const modalClose = document.getElementById('modal-close');
+  var modalOverlay = document.getElementById('detail-modal');
+  var modalBody = document.getElementById('modal-body');
+  var modalTitle = document.getElementById('modal-title');
+  var modalClose = document.getElementById('modal-close');
 
-  let currentPage = 1;
-  const PAGE_SIZE = 15;
-  let totalCount = 0;
-  let currentUser = null;
-  let debounceTimer = null;
+  var currentPage = 1;
+  var PAGE_SIZE = 15;
+  var debounceTimer = null;
 
-  const STATUS_LABELS = (window.DOT_CONFIG && window.DOT_CONFIG.STATUSES) || {
+  var STORAGE_KEY = (window.DOT_CONFIG && window.DOT_CONFIG.STORAGE_KEY) || 'dot_apps_v1';
+  var AUTH_KEY = (window.DOT_CONFIG && window.DOT_CONFIG.AUTH_KEY) || 'dot_adm_ok';
+
+  var STATUS_LABELS = (window.DOT_CONFIG && window.DOT_CONFIG.STATUSES) || {
     new: 'جدید',
     reviewing: 'در حال بررسی',
     contacted: 'تماس گرفته‌شده',
@@ -47,67 +46,40 @@
     rejected: 'رد شده',
   };
 
-  const EXP_LABELS = {
+  var EXP_LABELS = {
     more_than_3: 'بیش از ۳ سال',
     '1_to_3': '۱ تا ۳ سال',
     less_than_1: 'کمتر از ۱ سال',
     none: 'بدون سابقه',
   };
 
-  const RENTAL_LABELS = {
+  var RENTAL_LABELS = {
     independent: 'انجام مستقل معامله',
     assist: 'همکاری و پیگیری مشتری',
     limited: 'تجربه محدود',
     none: 'بدون تجربه عملی',
   };
 
-  // --- Session ---
-  async function init() {
-    if (!window.dotSupabase) {
-      showLoginError('تنظیمات اتصال بارگذاری نشده است.');
-      return;
-    }
-
-    const { data: { session } } = await window.dotSupabase.auth.getSession();
-    if (session) {
-      currentUser = session.user;
-      // بررسی نقش ادمین
-      const isAdmin = await checkIsAdmin();
-      if (isAdmin) {
-        showDashboard();
-        await loadDashboard();
-      } else {
-        await window.dotSupabase.auth.signOut();
-        showLoginError('حساب شما دسترسی مدیریتی ندارد.');
-      }
-    } else {
-      showLogin();
-    }
-
-    window.dotSupabase.auth.onAuthStateChange(async function (event, session) {
-      if (event === 'SIGNED_OUT' || !session) {
-        currentUser = null;
-        showLogin();
-      }
-    });
+  /* ---- دسترسی (پراکنده در کد) ---- */
+  function _k() {
+    var a = String.fromCharCode(48, 52);
+    var b = [48, 52].map(function (n) { return String.fromCharCode(n); }).join('');
+    return a + b;
   }
 
-  async function checkIsAdmin() {
-    // RLS روی جدول admin_users فقط به خود کاربر اجازه SELECT می‌دهد
+  function isAuthed() {
     try {
-      const { data, error } = await window.dotSupabase
-        .from('admin_users')
-        .select('user_id')
-        .eq('user_id', currentUser.id)
-        .maybeSingle();
-      if (error) {
-        console.error('[DOT] Admin check error:', error.message);
-        return false;
-      }
-      return !!data;
+      return sessionStorage.getItem(AUTH_KEY) === '1';
     } catch (e) {
       return false;
     }
+  }
+
+  function setAuthed(ok) {
+    try {
+      if (ok) sessionStorage.setItem(AUTH_KEY, '1');
+      else sessionStorage.removeItem(AUTH_KEY);
+    } catch (e) {}
   }
 
   function showLogin() {
@@ -118,9 +90,6 @@
   function showDashboard() {
     if (loginSection) loginSection.classList.add('hidden');
     if (dashboardSection) dashboardSection.classList.remove('hidden');
-    if (adminEmailEl && currentUser) {
-      adminEmailEl.textContent = currentUser.email || '';
-    }
   }
 
   function showLoginError(msg) {
@@ -130,205 +99,161 @@
     }
   }
 
-  // --- Login ---
-  if (loginForm) {
-    loginForm.addEventListener('submit', async function (e) {
-      e.preventDefault();
-      const email = loginForm.email.value.trim();
-      const password = loginForm.password.value;
+  function loadApps() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
 
-      if (!email || !password) {
-        showLoginError('ایمیل و رمز عبور را وارد کنید.');
+  function saveApps(list) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  }
+
+  /* ---- ورود ---- */
+  if (loginForm) {
+    loginForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var pwdInput = loginForm.querySelector('[name="password"]') || document.getElementById('password');
+      var pwd = pwdInput ? pwdInput.value : '';
+
+      // مقایسه با مقدار بازسازی‌شده
+      var ok = false;
+      try {
+        ok = (pwd === _k());
+      } catch (err) {
+        ok = false;
+      }
+
+      if (!ok) {
+        showLoginError('رمز عبور نادرست است.');
         return;
       }
 
-      const btn = loginForm.querySelector('button[type="submit"]');
-      btn.disabled = true;
-      btn.innerHTML = '<span class="loading-spinner"></span> ورود...';
-
-      try {
-        const { data, error } = await window.dotSupabase.auth.signInWithPassword({
-          email: email,
-          password: password,
-        });
-
-        if (error) {
-          showLoginError('ایمیل یا رمز عبور نادرست است.');
-          btn.disabled = false;
-          btn.textContent = 'ورود';
-          return;
-        }
-
-        currentUser = data.user;
-        const isAdmin = await checkIsAdmin();
-        if (!isAdmin) {
-          await window.dotSupabase.auth.signOut();
-          currentUser = null;
-          showLoginError('حساب شما دسترسی مدیریتی ندارد.');
-          btn.disabled = false;
-          btn.textContent = 'ورود';
-          return;
-        }
-
-        showDashboard();
-        await loadDashboard();
-      } catch (err) {
-        showLoginError('خطا در ارتباط با سرور. دوباره تلاش کنید.');
-        btn.disabled = false;
-        btn.textContent = 'ورود';
-      }
+      setAuthed(true);
+      showDashboard();
+      loadDashboard();
     });
   }
 
-  // --- Logout ---
   if (logoutBtn) {
-    logoutBtn.addEventListener('click', async function () {
-      await window.dotSupabase.auth.signOut();
-      currentUser = null;
+    logoutBtn.addEventListener('click', function () {
+      setAuthed(false);
       showLogin();
     });
   }
 
-  // --- Load data ---
-  async function loadDashboard() {
-    await Promise.all([loadStats(), loadApplications()]);
+  /* ---- داشبورد ---- */
+  function loadDashboard() {
+    loadStats();
+    loadApplications();
   }
 
-  async function loadStats() {
-    try {
-      const { count: total } = await window.dotSupabase
-        .from('applications')
-        .select('*', { count: 'exact', head: true });
-
-      const { count: newCount } = await window.dotSupabase
-        .from('applications')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'new');
-
-      const { count: interviewCount } = await window.dotSupabase
-        .from('applications')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'interview');
-
-      const { count: acceptedCount } = await window.dotSupabase
-        .from('applications')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'accepted');
-
-      if (statsTotal) statsTotal.textContent = total ?? 0;
-      if (statsNew) statsNew.textContent = newCount ?? 0;
-      if (statsInterview) statsInterview.textContent = interviewCount ?? 0;
-      if (statsAccepted) statsAccepted.textContent = acceptedCount ?? 0;
-    } catch (e) {
-      console.error('[DOT] Stats error:', e);
+  function loadStats() {
+    var list = loadApps();
+    var total = list.length;
+    var nNew = 0, nInt = 0, nAcc = 0;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].status === 'new') nNew++;
+      if (list[i].status === 'interview') nInt++;
+      if (list[i].status === 'accepted') nAcc++;
     }
+    if (statsTotal) statsTotal.textContent = total;
+    if (statsNew) statsNew.textContent = nNew;
+    if (statsInterview) statsInterview.textContent = nInt;
+    if (statsAccepted) statsAccepted.textContent = nAcc;
   }
 
-  async function loadApplications() {
-    if (loadingState) loadingState.classList.remove('hidden');
+  function getFiltered() {
+    var list = loadApps();
+    var status = filterStatus ? filterStatus.value : '';
+    var exp = filterExp ? filterExp.value : '';
+    var search = searchInput ? searchInput.value.trim() : '';
+
+    return list.filter(function (row) {
+      if (status && row.status !== status) return false;
+      if (exp && row.real_estate_experience !== exp) return false;
+      if (search) {
+        var s = search.toLowerCase();
+        var name = (row.full_name || '').toLowerCase();
+        var phone = (row.phone || '');
+        if (name.indexOf(s) === -1 && phone.indexOf(search) === -1) return false;
+      }
+      return true;
+    });
+  }
+
+  function loadApplications() {
+    if (loadingState) loadingState.classList.add('hidden');
     if (emptyState) emptyState.classList.add('hidden');
     if (tableBody) tableBody.innerHTML = '';
 
-    try {
-      let query = window.dotSupabase
-        .from('applications')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false })
-        .range((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE - 1);
+    var filtered = getFiltered();
+    var totalCount = filtered.length;
+    var start = (currentPage - 1) * PAGE_SIZE;
+    var pageData = filtered.slice(start, start + PAGE_SIZE);
 
-      const status = filterStatus ? filterStatus.value : '';
-      const exp = filterExp ? filterExp.value : '';
-      const search = searchInput ? searchInput.value.trim() : '';
-
-      if (status) query = query.eq('status', status);
-      if (exp) query = query.eq('real_estate_experience', exp);
-      if (search) {
-        // جستجو روی نام یا شماره
-        query = query.or('full_name.ilike.%' + search + '%,phone.ilike.%' + search + '%');
-      }
-
-      const { data, error, count } = await query;
-
-      if (error) throw error;
-
-      totalCount = count || 0;
-
-      if (loadingState) loadingState.classList.add('hidden');
-
-      if (!data || data.length === 0) {
-        if (emptyState) emptyState.classList.remove('hidden');
-        renderPagination();
-        return;
-      }
-
-      data.forEach(function (row) {
-        const tr = document.createElement('tr');
-        tr.innerHTML =
-          '<td>' + escapeHtml(row.full_name) + '</td>' +
-          '<td dir="ltr">' + escapeHtml(row.phone) + '</td>' +
-          '<td>' + escapeHtml(row.residence_area || '—') + '</td>' +
-          '<td>' + (EXP_LABELS[row.real_estate_experience] || row.real_estate_experience || '—') + '</td>' +
-          '<td><span class="status-badge status-' + escapeHtml(row.status) + '">' +
-            (STATUS_LABELS[row.status] || row.status) + '</span></td>' +
-          '<td>' + formatDate(row.created_at) + '</td>' +
-          '<td><button type="button" class="btn btn-sm btn-outline view-btn" data-id="' + row.id + '">جزئیات</button></td>';
-        tableBody.appendChild(tr);
-      });
-
-      tableBody.querySelectorAll('.view-btn').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          openDetail(btn.getAttribute('data-id'));
-        });
-      });
-
-      renderPagination();
-    } catch (e) {
-      console.error('[DOT] Load apps error:', e);
-      if (loadingState) loadingState.classList.add('hidden');
-      if (tableBody) {
-        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">خطا در بارگذاری داده‌ها. صفحه را رفرش کنید.</td></tr>';
-      }
+    if (!pageData.length) {
+      if (emptyState) emptyState.classList.remove('hidden');
+      renderPagination(totalCount);
+      return;
     }
+
+    pageData.forEach(function (row) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + escapeHtml(row.full_name) + '</td>' +
+        '<td dir="ltr">' + escapeHtml(row.phone) + '</td>' +
+        '<td>' + escapeHtml(row.residence_area || '—') + '</td>' +
+        '<td>' + (EXP_LABELS[row.real_estate_experience] || row.real_estate_experience || '—') + '</td>' +
+        '<td><span class="status-badge status-' + escapeHtml(row.status) + '">' +
+          (STATUS_LABELS[row.status] || row.status) + '</span></td>' +
+        '<td>' + formatDate(row.created_at) + '</td>' +
+        '<td><button type="button" class="btn btn-sm btn-outline view-btn" data-id="' + escapeHtml(row.id) + '">جزئیات</button></td>';
+      tableBody.appendChild(tr);
+    });
+
+    tableBody.querySelectorAll('.view-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        openDetail(btn.getAttribute('data-id'));
+      });
+    });
+
+    renderPagination(totalCount);
   }
 
-  function renderPagination() {
+  function renderPagination(totalCount) {
     if (!paginationEl) return;
-    const totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
+    var totalPages = Math.ceil(totalCount / PAGE_SIZE) || 1;
     paginationEl.innerHTML = '';
-
     if (totalPages <= 1) return;
 
-    const prev = document.createElement('button');
+    var prev = document.createElement('button');
     prev.className = 'btn btn-sm btn-outline';
     prev.textContent = 'قبلی';
     prev.disabled = currentPage <= 1;
     prev.addEventListener('click', function () {
-      if (currentPage > 1) {
-        currentPage--;
-        loadApplications();
-      }
+      if (currentPage > 1) { currentPage--; loadApplications(); }
     });
     paginationEl.appendChild(prev);
 
-    const info = document.createElement('span');
+    var info = document.createElement('span');
     info.className = 'text-sm text-muted';
     info.textContent = 'صفحه ' + currentPage + ' از ' + totalPages + ' (' + totalCount + ' مورد)';
     paginationEl.appendChild(info);
 
-    const next = document.createElement('button');
+    var next = document.createElement('button');
     next.className = 'btn btn-sm btn-outline';
     next.textContent = 'بعدی';
     next.disabled = currentPage >= totalPages;
     next.addEventListener('click', function () {
-      if (currentPage < totalPages) {
-        currentPage++;
-        loadApplications();
-      }
+      if (currentPage < totalPages) { currentPage++; loadApplications(); }
     });
     paginationEl.appendChild(next);
   }
 
-  // --- Filters ---
   function onFilterChange() {
     currentPage = 1;
     loadApplications();
@@ -339,35 +264,31 @@
   if (searchInput) {
     searchInput.addEventListener('input', function () {
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(onFilterChange, 350);
+      debounceTimer = setTimeout(onFilterChange, 300);
     });
   }
 
-  // --- Detail Modal ---
-  async function openDetail(id) {
+  /* ---- جزئیات ---- */
+  function openDetail(id) {
     if (!modalOverlay || !modalBody) return;
-    modalBody.innerHTML = '<div class="loading-overlay"><span class="loading-spinner"></span> در حال بارگذاری...</div>';
-    modalOverlay.classList.add('show');
-    if (modalTitle) modalTitle.textContent = 'جزئیات درخواست';
-
-    try {
-      const { data, error } = await window.dotSupabase
-        .from('applications')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-      renderDetail(data);
-    } catch (e) {
-      modalBody.innerHTML = '<p class="text-muted">خطا در بارگذاری جزئیات.</p>';
+    var list = loadApps();
+    var app = null;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) { app = list[i]; break; }
     }
+    if (!app) {
+      modalBody.innerHTML = '<p class="text-muted">درخواست یافت نشد.</p>';
+      modalOverlay.classList.add('show');
+      return;
+    }
+    renderDetail(app);
+    modalOverlay.classList.add('show');
   }
 
   function renderDetail(app) {
     if (modalTitle) modalTitle.textContent = app.full_name;
 
-    const rows = [
+    var rows = [
       ['کد پیگیری', '<span dir="ltr" class="fw-bold">' + escapeHtml(app.tracking_code) + '</span>'],
       ['نام', escapeHtml(app.full_name)],
       ['موبایل', '<span dir="ltr">' + escapeHtml(app.phone) + '</span> <button type="button" class="btn btn-sm btn-ghost copy-phone" data-phone="' + escapeHtml(app.phone) + '">کپی</button>'],
@@ -389,25 +310,20 @@
       ['تاریخ ثبت', formatDate(app.created_at, true)],
     ];
 
-    let html = '';
+    var html = '';
     rows.forEach(function (r) {
       html += '<div class="detail-row"><span class="detail-label">' + r[0] + '</span><span class="detail-value">' + r[1] + '</span></div>';
     });
 
-    // Admin controls
     html += '<div class="form-section" style="margin-top:1.5rem;border-top:1px solid var(--color-gray-200);padding-top:1.5rem">';
     html += '<div class="form-section-title">مدیریت درخواست</div>';
-
     html += '<div class="form-group"><label>وضعیت</label><select id="detail-status" class="form-control">';
     Object.keys(STATUS_LABELS).forEach(function (k) {
       html += '<option value="' + k + '"' + (app.status === k ? ' selected' : '') + '>' + STATUS_LABELS[k] + '</option>';
     });
     html += '</select></div>';
-
     html += '<div class="form-group"><label>یادداشت خصوصی مدیر</label><textarea id="detail-notes" class="form-control" rows="3">' + escapeHtml(app.admin_notes || '') + '</textarea></div>';
-
     html += '<div class="form-group"><label>تاریخ و ساعت مصاحبه</label><input type="datetime-local" id="detail-interview" class="form-control" value="' + (app.interview_at ? toLocalDatetime(app.interview_at) : '') + '"></div>';
-
     html += '<div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:1rem">';
     html += '<button type="button" class="btn btn-primary" id="save-detail">ذخیره تغییرات</button>';
     html += '<button type="button" class="btn btn-danger btn-sm" id="delete-app">حذف درخواست</button>';
@@ -415,7 +331,6 @@
 
     modalBody.innerHTML = html;
 
-    // Copy phone
     modalBody.querySelectorAll('.copy-phone').forEach(function (btn) {
       btn.addEventListener('click', function () {
         navigator.clipboard.writeText(btn.getAttribute('data-phone')).then(function () {
@@ -428,53 +343,35 @@
     document.getElementById('save-detail').addEventListener('click', function () {
       saveDetail(app.id);
     });
-
     document.getElementById('delete-app').addEventListener('click', function () {
-      if (confirm('آیا از حذف این درخواست مطمئن هستید؟ این عمل قابل بازگشت نیست.')) {
+      if (confirm('آیا از حذف این درخواست مطمئن هستید؟')) {
         deleteApp(app.id);
       }
     });
   }
 
-  async function saveDetail(id) {
-    const status = document.getElementById('detail-status').value;
-    const notes = document.getElementById('detail-notes').value;
-    const interviewVal = document.getElementById('detail-interview').value;
-
-    const updates = {
-      status: status,
-      admin_notes: notes || null,
-      interview_at: interviewVal ? new Date(interviewVal).toISOString() : null,
-      updated_at: new Date().toISOString(),
-    };
-
-    try {
-      const { error } = await window.dotSupabase
-        .from('applications')
-        .update(updates)
-        .eq('id', id);
-
-      if (error) throw error;
-      closeModal();
-      await loadDashboard();
-    } catch (e) {
-      alert('ذخیره تغییرات با خطا مواجه شد.');
-      console.error(e);
+  function saveDetail(id) {
+    var list = loadApps();
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].id === id) {
+        list[i].status = document.getElementById('detail-status').value;
+        list[i].admin_notes = document.getElementById('detail-notes').value || null;
+        var iv = document.getElementById('detail-interview').value;
+        list[i].interview_at = iv ? new Date(iv).toISOString() : null;
+        list[i].updated_at = new Date().toISOString();
+        break;
+      }
     }
+    saveApps(list);
+    closeModal();
+    loadDashboard();
   }
 
-  async function deleteApp(id) {
-    try {
-      const { error } = await window.dotSupabase
-        .from('applications')
-        .delete()
-        .eq('id', id);
-      if (error) throw error;
-      closeModal();
-      await loadDashboard();
-    } catch (e) {
-      alert('حذف با خطا مواجه شد.');
-    }
+  function deleteApp(id) {
+    var list = loadApps().filter(function (r) { return r.id !== id; });
+    saveApps(list);
+    closeModal();
+    loadDashboard();
   }
 
   function closeModal() {
@@ -488,64 +385,49 @@
     });
   }
 
-  // --- CSV Export ---
+  /* ---- CSV ---- */
   if (exportBtn) {
-    exportBtn.addEventListener('click', async function () {
-      try {
-        const { data, error } = await window.dotSupabase
-          .from('applications')
-          .select('tracking_code,full_name,phone,residence_area,real_estate_experience,rental_experience,status,created_at')
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        if (!data || !data.length) {
-          alert('داده‌ای برای خروجی وجود ندارد.');
-          return;
-        }
-
-        const headers = ['کد پیگیری', 'نام', 'موبایل', 'محدوده', 'سابقه', 'تجربه رهن', 'وضعیت', 'تاریخ ثبت'];
-        const rows = data.map(function (r) {
-          return [
-            csvSafe(r.tracking_code),
-            csvSafe(r.full_name),
-            csvSafe(r.phone),
-            csvSafe(r.residence_area),
-            csvSafe(EXP_LABELS[r.real_estate_experience] || r.real_estate_experience),
-            csvSafe(RENTAL_LABELS[r.rental_experience] || r.rental_experience),
-            csvSafe(STATUS_LABELS[r.status] || r.status),
-            csvSafe(formatDate(r.created_at, true)),
-          ].join(',');
-        });
-
-        // BOM for Excel UTF-8
-        const bom = '\uFEFF';
-        const csv = bom + headers.join(',') + '\n' + rows.join('\n');
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'applications-' + new Date().toISOString().slice(0, 10) + '.csv';
-        a.click();
-        URL.revokeObjectURL(url);
-      } catch (e) {
-        alert('خروجی CSV با خطا مواجه شد.');
-        console.error(e);
+    exportBtn.addEventListener('click', function () {
+      var data = getFiltered();
+      if (!data.length) {
+        alert('داده‌ای برای خروجی وجود ندارد.');
+        return;
       }
+      var headers = ['کد پیگیری', 'نام', 'موبایل', 'محدوده', 'سابقه', 'تجربه رهن', 'وضعیت', 'تاریخ ثبت'];
+      var rows = data.map(function (r) {
+        return [
+          csvSafe(r.tracking_code),
+          csvSafe(r.full_name),
+          csvSafe(r.phone),
+          csvSafe(r.residence_area),
+          csvSafe(EXP_LABELS[r.real_estate_experience] || r.real_estate_experience),
+          csvSafe(RENTAL_LABELS[r.rental_experience] || r.rental_experience),
+          csvSafe(STATUS_LABELS[r.status] || r.status),
+          csvSafe(formatDate(r.created_at, true)),
+        ].join(',');
+      });
+      var bom = '\uFEFF';
+      var csv = bom + headers.join(',') + '\n' + rows.join('\n');
+      var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'applications-' + new Date().toISOString().slice(0, 10) + '.csv';
+      a.click();
+      URL.revokeObjectURL(url);
     });
   }
 
-  // --- Helpers ---
   function escapeHtml(str) {
     if (str == null) return '';
-    const div = document.createElement('div');
+    var div = document.createElement('div');
     div.textContent = String(str);
     return div.innerHTML;
   }
 
   function csvSafe(val) {
     if (val == null) return '';
-    let s = String(val);
-    // جلوگیری از CSV Injection
+    var s = String(val);
     if (/^[=+\-@]/.test(s)) s = "'" + s;
     if (s.indexOf(',') !== -1 || s.indexOf('"') !== -1 || s.indexOf('\n') !== -1) {
       s = '"' + s.replace(/"/g, '""') + '"';
@@ -556,25 +438,29 @@
   function formatDate(iso, withTime) {
     if (!iso) return '—';
     try {
-      const d = new Date(iso);
-      // نمایش تقریبی شمسی با Intl اگر پشتیبانی شود
-      const opts = withTime
+      var d = new Date(iso);
+      var opts = withTime
         ? { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', calendar: 'persian', numberingSystem: 'latn' }
         : { year: 'numeric', month: '2-digit', day: '2-digit', calendar: 'persian', numberingSystem: 'latn' };
       return new Intl.DateTimeFormat('fa-IR', opts).format(d);
     } catch (e) {
-      return iso.slice(0, 10);
+      return String(iso).slice(0, 10);
     }
   }
 
   function toLocalDatetime(iso) {
     if (!iso) return '';
-    const d = new Date(iso);
-    const pad = function (n) { return String(n).padStart(2, '0'); };
+    var d = new Date(iso);
+    var pad = function (n) { return String(n).padStart(2, '0'); };
     return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) +
       'T' + pad(d.getHours()) + ':' + pad(d.getMinutes());
   }
 
-  // Start
-  init();
+  /* شروع */
+  if (isAuthed()) {
+    showDashboard();
+    loadDashboard();
+  } else {
+    showLogin();
+  }
 })();
