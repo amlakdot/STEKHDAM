@@ -20,16 +20,12 @@
         <span>املاک دات</span>
       </div>
       <h1>ورود مدیر</h1>
-      <p class="subtitle">فقط برای مدیران مجاز سیستم</p>
+      <p class="subtitle">دسترسی محدود</p>
       <div id="login-alert" class="alert" role="alert"></div>
       <form id="login-form">
         <div class="form-group">
-          <label for="email">ایمیل</label>
-          <input type="email" id="email" name="email" class="form-control" required autocomplete="username" dir="ltr">
-        </div>
-        <div class="form-group">
           <label for="password">رمز عبور</label>
-          <input type="password" id="password" name="password" class="form-control" required autocomplete="current-password" dir="ltr">
+          <input type="password" id="password" name="password" class="form-control" required autocomplete="current-password" dir="ltr" autofocus>
         </div>
         <button type="submit" class="btn btn-primary btn-block">ورود</button>
       </form>
@@ -45,14 +41,12 @@
           <span>پنل مدیریت</span>
         </div>
         <div style="display:flex;align-items:center;gap:1rem;">
-          <span class="admin-user" id="admin-email"></span>
           <button type="button" id="logout-btn" class="btn btn-sm btn-outline">خروج</button>
         </div>
       </div>
     </header>
 
     <main class="container" style="padding-top:1.5rem;padding-bottom:3rem;">
-      <!-- آمار -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-value" id="stat-total">—</div>
@@ -72,7 +66,6 @@
         </div>
       </div>
 
-      <!-- فیلترها -->
       <div class="filters-bar">
         <input type="search" id="search-input" class="form-control search-input" placeholder="جست‌وجوی نام یا شماره..." dir="rtl">
         <select id="filter-status" class="form-control">
@@ -94,7 +87,6 @@
         <button type="button" id="export-csv" class="btn btn-sm btn-outline">خروجی CSV</button>
       </div>
 
-      <!-- جدول -->
       <div class="table-wrap">
         <div id="loading-state" class="loading-overlay hidden">
           <span class="loading-spinner"></span>
@@ -124,7 +116,6 @@
     </main>
   </div>
 
-  <!-- مودال جزئیات -->
   <div id="detail-modal" class="modal-overlay" role="dialog" aria-modal="true">
     <div class="modal">
       <div class="modal-header">
@@ -135,9 +126,7 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="assets/js/config.js"></script>
-  <script src="assets/js/supabase-client.js"></script>
   <script src="assets/js/admin.js"></script>
 </body>
 </html>
