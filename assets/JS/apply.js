@@ -85,8 +85,38 @@
       valid = false;
     }
 
-    if (!form.residence_area.value.trim()) {
-      setFieldError(form.residence_area, 'شهر و محدوده سکونت الزامی است.');
+    var ageVal = form.age.value.trim();
+    if (!ageVal) {
+      setFieldError(form.age, 'سن الزامی است.');
+      valid = false;
+    } else {
+      var ageNum = parseInt(ageVal, 10);
+      if (isNaN(ageNum) || ageNum < 18 || ageNum > 80) {
+        setFieldError(form.age, 'سن باید حداقل ۱۸ و حداکثر ۸۰ باشد.');
+        valid = false;
+      }
+    }
+
+    if (!form.gender.value) {
+      setFieldError(form.querySelector('input[name="gender"]'), 'جنسیت را انتخاب کنید.');
+      valid = false;
+    }
+
+    if (!form.residence_city.value) {
+      setFieldError(form.querySelector('input[name="residence_city"]'), 'شهر و محدوده سکونت را انتخاب کنید.');
+      valid = false;
+    } else if (form.residence_city.value === 'other') {
+      if (!form.residence_other.value.trim()) {
+        setFieldError(form.residence_other, 'محدوده سکونت خود را وارد کنید.');
+        valid = false;
+      }
+    }
+
+    if (!form.has_vehicle.value) {
+      setFieldError(form.querySelector('input[name="has_vehicle"]'), 'وضعیت وسیله نقلیه را مشخص کنید.');
+      valid = false;
+    } else if (form.has_vehicle.value === 'دارم' && !form.vehicle_type.value) {
+      setFieldError(form.querySelector('input[name="vehicle_type"]'), 'نوع وسیله نقلیه را انتخاب کنید.');
       valid = false;
     }
 
@@ -127,14 +157,27 @@
     return { valid: valid, isBot: false };
   }
 
+  function getResidenceArea() {
+    var city = form.residence_city.value;
+    if (city === 'other') {
+      return form.residence_other.value.trim();
+    }
+    return city || '';
+  }
+
   function collectData() {
+    var hasVehicle = form.has_vehicle.value;
     return {
       id: 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9),
       tracking_code: generateTrackingCode(),
       full_name: form.full_name.value.trim(),
       phone: normalizePhone(form.phone.value.trim()),
-      residence_area: form.residence_area.value.trim(),
       age: form.age.value ? parseInt(form.age.value, 10) : null,
+      gender: form.gender.value || null,
+      residence_city: form.residence_city.value === 'other' ? 'other' : form.residence_city.value,
+      residence_area: getResidenceArea(),
+      has_vehicle: hasVehicle || null,
+      vehicle_type: hasVehicle === 'دارم' ? (form.vehicle_type.value || null) : null,
       real_estate_experience: form.real_estate_experience.value,
       experience_duration: form.experience_duration.value.trim() || null,
       rental_experience: form.rental_experience.value,
@@ -221,6 +264,41 @@
   form.querySelectorAll('.form-control').forEach(function (el) {
     el.addEventListener('input', function () {
       clearFieldError(el);
+    });
+  });
+
+  /* نمایش/مخفی کردن فیلد محدوده دیگر */
+  var residenceOtherWrap = document.getElementById('residence-other-wrap');
+  form.querySelectorAll('input[name="residence_city"]').forEach(function (radio) {
+    radio.addEventListener('change', function () {
+      if (residenceOtherWrap) {
+        if (radio.value === 'other') {
+          residenceOtherWrap.style.display = 'block';
+        } else {
+          residenceOtherWrap.style.display = 'none';
+          if (form.residence_other) form.residence_other.value = '';
+          clearFieldError(form.residence_other);
+        }
+      }
+    });
+  });
+
+  /* نمایش/مخفی کردن نوع وسیله نقلیه */
+  var vehicleTypeWrap = document.getElementById('vehicle-type-wrap');
+  form.querySelectorAll('input[name="has_vehicle"]').forEach(function (radio) {
+    radio.addEventListener('change', function () {
+      if (vehicleTypeWrap) {
+        if (radio.value === 'دارم') {
+          vehicleTypeWrap.style.display = 'block';
+        } else {
+          vehicleTypeWrap.style.display = 'none';
+          form.querySelectorAll('input[name="vehicle_type"]').forEach(function (r) {
+            r.checked = false;
+            var item = r.closest('.radio-item');
+            if (item) item.classList.remove('selected');
+          });
+        }
+      }
     });
   });
 })();
