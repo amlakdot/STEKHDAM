@@ -288,12 +288,21 @@
   function renderDetail(app) {
     if (modalTitle) modalTitle.textContent = app.full_name;
 
+    var vehicleLabel = '—';
+    if (app.has_vehicle === 'ندارم') {
+      vehicleLabel = 'ندارم';
+    } else if (app.has_vehicle === 'دارم') {
+      vehicleLabel = app.vehicle_type ? ('دارم — ' + app.vehicle_type) : 'دارم';
+    }
+
     var rows = [
       ['کد پیگیری', '<span dir="ltr" class="fw-bold">' + escapeHtml(app.tracking_code) + '</span>'],
       ['نام', escapeHtml(app.full_name)],
       ['موبایل', '<span dir="ltr">' + escapeHtml(app.phone) + '</span> <button type="button" class="btn btn-sm btn-ghost copy-phone" data-phone="' + escapeHtml(app.phone) + '">کپی</button>'],
-      ['محدوده سکونت', escapeHtml(app.residence_area || '—')],
       ['سن', app.age != null ? app.age : '—'],
+      ['جنسیت', escapeHtml(app.gender || '—')],
+      ['محدوده سکونت', escapeHtml(app.residence_area || '—')],
+      ['وسیله نقلیه', escapeHtml(vehicleLabel)],
       ['سابقه املاک', EXP_LABELS[app.real_estate_experience] || app.real_estate_experience || '—'],
       ['مدت سابقه', escapeHtml(app.experience_duration || '—')],
       ['تجربه رهن و اجاره', RENTAL_LABELS[app.rental_experience] || app.rental_experience || '—'],
@@ -393,13 +402,19 @@
         alert('داده‌ای برای خروجی وجود ندارد.');
         return;
       }
-      var headers = ['کد پیگیری', 'نام', 'موبایل', 'محدوده', 'سابقه', 'تجربه رهن', 'وضعیت', 'تاریخ ثبت'];
+      var headers = ['کد پیگیری', 'نام', 'موبایل', 'سن', 'جنسیت', 'محدوده', 'وسیله نقلیه', 'سابقه', 'تجربه رهن', 'وضعیت', 'تاریخ ثبت'];
       var rows = data.map(function (r) {
+        var vehicleCsv = '—';
+        if (r.has_vehicle === 'ندارم') vehicleCsv = 'ندارم';
+        else if (r.has_vehicle === 'دارم') vehicleCsv = r.vehicle_type ? ('دارم — ' + r.vehicle_type) : 'دارم';
         return [
           csvSafe(r.tracking_code),
           csvSafe(r.full_name),
           csvSafe(r.phone),
+          csvSafe(r.age != null ? r.age : ''),
+          csvSafe(r.gender),
           csvSafe(r.residence_area),
+          csvSafe(vehicleCsv),
           csvSafe(EXP_LABELS[r.real_estate_experience] || r.real_estate_experience),
           csvSafe(RENTAL_LABELS[r.rental_experience] || r.rental_experience),
           csvSafe(STATUS_LABELS[r.status] || r.status),
