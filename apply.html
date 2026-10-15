@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ثبت درخواست همکاری با املاک دات در بخش رهن و اجاره">
+  <title>ثبت درخواست همکاری | املاک دات</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-mark">د</span>
+        <span>املاک دات</span>
+      </a>
+      <nav class="nav-links">
+        <a href="index.html" class="nav-link">صفحه اصلی</a>
+        <a href="index.html#benefits" class="nav-link">شرایط همکاری</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="form-page">
+    <div class="container">
+      <div class="form-header">
+        <h1>ثبت درخواست همکاری</h1>
+        <p class="text-muted">فرم زیر را با دقت تکمیل کنید. پس از بررسی با شما تماس گرفته می‌شود.</p>
+      </div>
+
+      <!-- پیام موفقیت -->
+      <div id="success-panel" class="success-panel card form-card">
+        <div class="success-icon">✓</div>
+        <h2>درخواست شما ثبت شد</h2>
+        <p class="text-muted" style="margin: 0.75rem 0;">
+          کد پیگیری خود را یادداشت کنید. در صورت نیاز به پیگیری از این کد استفاده کنید.
+        </p>
+        <div class="tracking-code" id="tracking-code">—</div>
+        <p class="text-sm text-muted" style="margin-top: 1rem;">
+          تیم املاک دات درخواست شما را بررسی می‌کند و در صورت نیاز با شماره موبایلی که وارد کرده‌اید تماس می‌گیرد.
+        </p>
+        <a href="index.html" class="btn btn-outline mt-4">بازگشت به صفحه اصلی</a>
+      </div>
+
+      <!-- فرم -->
+      <div id="form-card" class="card form-card">
+        <div id="form-alert" class="alert" role="alert"></div>
+
+        <form id="apply-form" novalidate>
+          <!-- Honeypot ضدربات -->
+          <div class="hp-field" aria-hidden="true">
+            <label for="website">وب‌سایت</label>
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off">
+          </div>
+
+          <!-- اطلاعات فردی -->
+          <div class="form-section">
+            <div class="form-section-title">اطلاعات فردی</div>
+
+            <div class="form-group">
+              <label for="full_name">نام و نام خانوادگی <span class="required">*</span></label>
+              <input type="text" id="full_name" name="full_name" class="form-control" required autocomplete="name" minlength="3" maxlength="100">
+              <div class="form-error"></div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="phone">شماره موبایل <span class="required">*</span></label>
+                <input type="tel" id="phone" name="phone" class="form-control" required dir="ltr" placeholder="09123456789" autocomplete="tel" inputmode="tel">
+                <div class="form-hint">مثال: ۰۹۱۲۳۴۵۶۷۸۹</div>
+                <div class="form-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="age">سن <span class="optional">(اختیاری)</span></label>
+                <input type="number" id="age" name="age" class="form-control" min="16" max="80" inputmode="numeric">
+                <div class="form-error"></div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="residence_area">شهر و محدوده سکونت <span class="required">*</span></label>
+              <input type="text" id="residence_area" name="residence_area" class="form-control" required placeholder="مثال: تهران، منطقه ۵ — جنت‌آباد" maxlength="150">
+              <div class="form-error"></div>
+            </div>
+          </div>
+
+          <!-- سوابق کاری -->
+          <div class="form-section">
+            <div class="form-section-title">سوابق کاری</div>
+
+            <div class="form-group">
+              <label>وضعیت سابقه فعالیت در املاک <span class="required">*</span></label>
+              <div class="radio-group">
+                <label class="radio-item">
+                  <input type="radio" name="real_estate_experience" value="more_than_3" required>
+                  <span>بیش از ۳ سال</span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="real_estate_experience" value="1_to_3">
+                  <span>۱ تا ۳ سال</span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="real_estate_experience" value="less_than_1">
+                  <span>کمتر از ۱ سال</span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="real_estate_experience" value="none">
+                  <span>بدون سابقه</span>
+                </label>
+              </div>
+              <div class="form-error"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="experience_duration">مدت سابقه دقیق <span class="optional">(در صورت داشتن سابقه)</span></label>
+              <input type="text" id="experience_duration" name="experience_duration" class="form-control" placeholder="مثال: ۲ سال و ۴ ماه" maxlength="80">
+            </div>
+
+            <div class="form-group">
+              <label>سطح تجربه در رهن و اجاره <span class="required">*</span></label>
+              <div class="radio-group">
+                <label class="radio-item">
+                  <input type="radio" name="rental_experience" value="independent" required>
+                  <span>انجام مستقل معامله</span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="rental_experience" value="assist">
+                  <span>همکاری و پیگیری مشتری</span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="rental_experience" value="limited">
+                  <span>تجربه محدود</span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="rental_experience" value="none">
+                  <span>بدون تجربه عملی</span>
+                </label>
+              </div>
+              <div class="form-error"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="divar_experience">آشنایی با ثبت آگهی در دیوار <span class="optional">(اختیاری)</span></label>
+              <select id="divar_experience" name="divar_experience" class="form-control">
+                <option value="">انتخاب کنید</option>
+                <option value="حرفه‌ای">حرفه‌ای — ثبت و مدیریت منظم</option>
+                <option value="متوسط">متوسط — آشنایی نسبی</option>
+                <option value="کم">کم — آشنایی سطحی</option>
+                <option value="ندارم">آشنایی ندارم</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="negotiation_experience">تجربه مذاکره، پیگیری مشتری و جذب متقاضی <span class="optional">(اختیاری)</span></label>
+              <textarea id="negotiation_experience" name="negotiation_experience" class="form-control" rows="2" maxlength="500" placeholder="به‌اختصار توضیح دهید"></textarea>
+            </div>
+          </div>
+
+          <!-- شرایط همکاری -->
+          <div class="form-section">
+            <div class="form-section-title">شرایط همکاری</div>
+
+            <div class="form-group">
+              <label for="employment_status">وضعیت فعلی اشتغال <span class="optional">(اختیاری)</span></label>
+              <select id="employment_status" name="employment_status" class="form-control">
+                <option value="">انتخاب کنید</option>
+                <option value="بیکار">بیکار / جویای کار</option>
+                <option value="شاغل پاره وقت">شاغل پاره‌وقت</option>
+                <option value="شاغل تمام وقت">شاغل تمام‌وقت</option>
+                <option value="آزاد">فعالیت آزاد</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>امکان حضور شنبه تا چهارشنبه از ساعت ۹ تا ۱۳ <span class="required">*</span></label>
+              <div class="radio-group">
+                <label class="radio-item">
+                  <input type="radio" name="morning_availability" value="بله، کامل" required>
+                  <span>بله، کامل</span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="morning_availability" value="بله، با محدودیت">
+                  <span>بله، با محدودیت</span>
+                </label>
+                <label class="radio-item">
+                  <input type="radio" name="morning_availability" value="خیر">
+                  <span>خیر</span>
+                </label>
+              </div>
+              <div class="form-error"></div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="evening_availability">امکان فعالیت در ساعات عصر <span class="optional">(اختیاری)</span></label>
+                <select id="evening_availability" name="evening_availability" class="form-control">
+                  <option value="">انتخاب کنید</option>
+                  <option value="بله">بله</option>
+                  <option value="گاهی">گاهی</option>
+                  <option value="خیر">خیر</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="holiday_availability">فعالیت پنجشنبه و جمعه <span class="optional">(اختیاری)</span></label>
+                <select id="holiday_availability" name="holiday_availability" class="form-control">
+                  <option value="">انتخاب کنید</option>
+                  <option value="بله">بله</option>
+                  <option value="گاهی">گاهی</option>
+                  <option value="خیر">خیر</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="start_availability">زمان آمادگی برای شروع همکاری <span class="optional">(اختیاری)</span></label>
+              <input type="text" id="start_availability" name="start_availability" class="form-control" placeholder="مثال: از هفته آینده / فوری" maxlength="100">
+            </div>
+          </div>
+
+          <!-- سؤالات تشریحی -->
+          <div class="form-section">
+            <div class="form-section-title">سؤالات تشریحی</div>
+
+            <div class="form-group">
+              <label for="motivation">چرا می‌خواهید در بخش رهن و اجاره فعالیت کنید؟ <span class="required">*</span></label>
+              <textarea id="motivation" name="motivation" class="form-control" required minlength="10" maxlength="1000" rows="3"></textarea>
+              <div class="form-error"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="key_skill_answer">مهم‌ترین مهارت یک مشاور املاک از نظر شما چیست؟ <span class="required">*</span></label>
+              <textarea id="key_skill_answer" name="key_skill_answer" class="form-control" required minlength="5" maxlength="500" rows="2"></textarea>
+              <div class="form-error"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="about_applicant">توضیح کوتاه درباره خودتان <span class="optional">(اختیاری)</span></label>
+              <textarea id="about_applicant" name="about_applicant" class="form-control" maxlength="800" rows="3"></textarea>
+            </div>
+          </div>
+
+          <!-- تأیید -->
+          <div class="consent-box">
+            <label>
+              <input type="checkbox" id="consent" name="consent" required>
+              <span>اطلاعات واردشده صحیح است و با استفاده از اطلاعات تماس من برای بررسی درخواست استخدام موافقت دارم. <span class="required">*</span></span>
+            </label>
+          </div>
+
+          <button type="submit" id="submit-btn" class="btn btn-primary btn-block">ارسال درخواست</button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span class="footer-brand">املاک دات</span>
+      <span>سیستم جذب مشاور</span>
+    </div>
+  </footer>
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/supabase-client.js"></script>
+  <script src="assets/js/apply.js"></script>
+</body>
+</html>

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>پنل مدیریت | املاک دات</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body class="admin-body">
+
+  <!-- ورود -->
+  <div id="login-section" class="admin-login-wrap">
+    <div class="login-card">
+      <div class="logo">
+        <span class="logo-mark">د</span>
+        <span>املاک دات</span>
+      </div>
+      <h1>ورود مدیر</h1>
+      <p class="subtitle">فقط برای مدیران مجاز سیستم</p>
+      <div id="login-alert" class="alert" role="alert"></div>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="email">ایمیل</label>
+          <input type="email" id="email" name="email" class="form-control" required autocomplete="username" dir="ltr">
+        </div>
+        <div class="form-group">
+          <label for="password">رمز عبور</label>
+          <input type="password" id="password" name="password" class="form-control" required autocomplete="current-password" dir="ltr">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">ورود</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- داشبورد -->
+  <div id="dashboard-section" class="hidden">
+    <header class="admin-header">
+      <div class="container admin-header-inner">
+        <div class="logo">
+          <span class="logo-mark">د</span>
+          <span>پنل مدیریت</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem;">
+          <span class="admin-user" id="admin-email"></span>
+          <button type="button" id="logout-btn" class="btn btn-sm btn-outline">خروج</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container" style="padding-top:1.5rem;padding-bottom:3rem;">
+      <!-- آمار -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-total">—</div>
+          <div class="stat-label">کل درخواست‌ها</div>
+        </div>
+        <div class="stat-card highlight">
+          <div class="stat-value" id="stat-new">—</div>
+          <div class="stat-label">جدید</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-interview">—</div>
+          <div class="stat-label">دعوت به مصاحبه</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-accepted">—</div>
+          <div class="stat-label">پذیرفته‌شده</div>
+        </div>
+      </div>
+
+      <!-- فیلترها -->
+      <div class="filters-bar">
+        <input type="search" id="search-input" class="form-control search-input" placeholder="جست‌وجوی نام یا شماره..." dir="rtl">
+        <select id="filter-status" class="form-control">
+          <option value="">همه وضعیت‌ها</option>
+          <option value="new">جدید</option>
+          <option value="reviewing">در حال بررسی</option>
+          <option value="contacted">تماس گرفته‌شده</option>
+          <option value="interview">دعوت به مصاحبه</option>
+          <option value="accepted">پذیرفته‌شده</option>
+          <option value="rejected">رد شده</option>
+        </select>
+        <select id="filter-experience" class="form-control">
+          <option value="">همه سوابق</option>
+          <option value="more_than_3">بیش از ۳ سال</option>
+          <option value="1_to_3">۱ تا ۳ سال</option>
+          <option value="less_than_1">کمتر از ۱ سال</option>
+          <option value="none">بدون سابقه</option>
+        </select>
+        <button type="button" id="export-csv" class="btn btn-sm btn-outline">خروجی CSV</button>
+      </div>
+
+      <!-- جدول -->
+      <div class="table-wrap">
+        <div id="loading-state" class="loading-overlay hidden">
+          <span class="loading-spinner"></span>
+          <p style="margin-top:0.75rem;">در حال بارگذاری...</p>
+        </div>
+        <div id="empty-state" class="empty-state hidden">
+          درخواستی یافت نشد.
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>نام</th>
+                <th>موبایل</th>
+                <th>محدوده</th>
+                <th>سابقه</th>
+                <th>وضعیت</th>
+                <th>تاریخ ثبت</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="apps-tbody"></tbody>
+          </table>
+        </div>
+        <div id="pagination" class="pagination"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- مودال جزئیات -->
+  <div id="detail-modal" class="modal-overlay" role="dialog" aria-modal="true">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title" style="font-size:1.15rem;">جزئیات</h2>
+        <button type="button" id="modal-close" class="btn btn-ghost btn-sm" aria-label="بستن">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/supabase-client.js"></script>
+  <script src="assets/js/admin.js"></script>
+</body>
+</html>

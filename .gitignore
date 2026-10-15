@@ -1,0 +1,15 @@
+# Secrets — هرگز commit نشوند
+.env
+.env.*
+!.env.example
+
+# Optional: اگر config.js حاوی کلید واقعی است و نمی‌خواهید در مخزن باشد
+# assets/js/config.js
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.log
+node_modules/
