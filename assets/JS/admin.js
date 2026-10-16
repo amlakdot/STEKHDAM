@@ -1,5 +1,5 @@
 /**
- * پنل مدیریت — فقط فرانت‌اند، بدون سرویس خارجی
+ * پنل مدیریت — داده از Supabase
  */
 (function () {
   'use strict';
@@ -33,8 +33,8 @@
   var currentPage = 1;
   var PAGE_SIZE = 15;
   var debounceTimer = null;
+  var appsCache = [];
 
-  var STORAGE_KEY = (window.DOT_CONFIG && window.DOT_CONFIG.STORAGE_KEY) || 'dot_apps_v1';
   var AUTH_KEY = (window.DOT_CONFIG && window.DOT_CONFIG.AUTH_KEY) || 'dot_adm_ok';
 
   var STATUS_LABELS = (window.DOT_CONFIG && window.DOT_CONFIG.STATUSES) || {
@@ -99,17 +99,38 @@
     }
   }
 
-  function loadApps() {
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      return [];
+  function fetchApps(callback) {
+    if (!window.dotSupabase) {
+      console.error('[DOT] Supabase آماده نیست');
+      appsCache = [];
+      if (callback) callback([]);
+      return;
     }
+    if (loadingState) loadingState.classList.remove('hidden');
+    window.dotSupabase
+      .from('applications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .then(function (res) {
+        if (loadingState) loadingState.classList.add('hidden');
+        if (res.error) {
+          console.error('[DOT] fetch error', res.error);
+          appsCache = [];
+        } else {
+          appsCache = res.data || [];
+        }
+        if (callback) callback(appsCache);
+      })
+      .catch(function (err) {
+        if (loadingState) loadingState.classList.add('hidden');
+        console.error('[DOT] fetch exception', err);
+        appsCache = [];
+        if (callback) callback([]);
+      });
   }
 
-  function saveApps(list) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  function loadApps() {
+    return appsCache;
   }
 
   /* ---- ورود ---- */
@@ -147,8 +168,10 @@
 
   /* ---- داشبورد ---- */
   function loadDashboard() {
-    loadStats();
-    loadApplications();
+    fetchApps(function () {
+      loadStats();
+      loadApplications();
+    });
   }
 
   function loadStats() {
@@ -360,27 +383,54 @@
   }
 
   function saveDetail(id) {
-    var list = loadApps();
-    for (var i = 0; i < list.length; i++) {
-      if (list[i].id === id) {
-        list[i].status = document.getElementById('detail-status').value;
-        list[i].admin_notes = document.getElementById('detail-notes').value || null;
-        var iv = document.getElementById('detail-interview').value;
-        list[i].interview_at = iv ? new Date(iv).toISOString() : null;
-        list[i].updated_at = new Date().toISOString();
-        break;
-      }
-    }
-    saveApps(list);
-    closeModal();
-    loadDashboard();
+    if (!window.dotSupabase) return;
+    var status = document.getElementById('detail-status').value;
+    var notes = document.getElementById('detail-notes').value || null;
+    var iv = document.getElementById('detail-interview').value;
+    var interviewAt = iv ? new Date(iv).toISOString() : null;
+    var updatedAt = new Date().toISOString();
+
+    window.dotSupabase
+      .from('applications')
+      .update({
+        status: status,
+        admin_notes: notes,
+        interview_at: interviewAt,
+        updated_at: updatedAt,
+      })
+      .eq('id', id)
+      .then(function (res) {
+        if (res.error) {
+          alert('ذخیره تغییرات ناموفق بود: ' + res.error.message);
+          return;
+        }
+        closeModal();
+        loadDashboard();
+      })
+      .catch(function (err) {
+        alert('ذخیره تغییرات ناموفق بود.');
+        console.error(err);
+      });
   }
 
   function deleteApp(id) {
-    var list = loadApps().filter(function (r) { return r.id !== id; });
-    saveApps(list);
-    closeModal();
-    loadDashboard();
+    if (!window.dotSupabase) return;
+    window.dotSupabase
+      .from('applications')
+      .delete()
+      .eq('id', id)
+      .then(function (res) {
+        if (res.error) {
+          alert('حذف ناموفق بود: ' + res.error.message);
+          return;
+        }
+        closeModal();
+        loadDashboard();
+      })
+      .catch(function (err) {
+        alert('حذف ناموفق بود.');
+        console.error(err);
+      });
   }
 
   function closeModal() {
