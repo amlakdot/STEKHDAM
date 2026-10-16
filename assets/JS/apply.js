@@ -1,5 +1,5 @@
 /**
- * منطق فرم استخدام — ذخیره فقط در مرورگر (localStorage)
+ * منطق فرم استخدام — ذخیره در Supabase
  */
 (function () {
   'use strict';
@@ -12,8 +12,6 @@
   var trackingEl = document.getElementById('tracking-code');
 
   if (!form) return;
-
-  var STORAGE_KEY = (window.DOT_CONFIG && window.DOT_CONFIG.STORAGE_KEY) || 'dot_apps_v1';
 
   function isValidIranianMobile(phone) {
     var cleaned = phone.replace(/[\s\-]/g, '');
@@ -199,19 +197,6 @@
     };
   }
 
-  function loadApps() {
-    try {
-      var raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch (e) {
-      return [];
-    }
-  }
-
-  function saveApps(list) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-  }
-
   form.addEventListener('submit', function (e) {
     e.preventDefault();
 
@@ -227,25 +212,39 @@
       return;
     }
 
+    if (!window.dotSupabase) {
+      showAlert('اتصال به سرور برقرار نیست. لطفاً بعداً دوباره تلاش کنید.', 'error');
+      return;
+    }
+
     submitBtn.disabled = true;
     var originalText = submitBtn.innerHTML;
     submitBtn.innerHTML = '<span class="loading-spinner"></span> در حال ارسال...';
 
-    try {
-      var payload = collectData();
-      var list = loadApps();
-      list.unshift(payload);
-      saveApps(list);
+    var payload = collectData();
 
-      formCard.classList.add('hidden');
-      successPanel.classList.add('show');
-      if (trackingEl) trackingEl.textContent = payload.tracking_code;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (err) {
-      showAlert('ثبت درخواست با مشکل مواجه شد. لطفاً دوباره تلاش کنید.', 'error');
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = originalText;
-    }
+    window.dotSupabase
+      .from('applications')
+      .insert([payload])
+      .then(function (res) {
+        if (res.error) {
+          console.error('[DOT] insert error', res.error);
+          showAlert('ثبت درخواست با مشکل مواجه شد. لطفاً دوباره تلاش کنید.', 'error');
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalText;
+          return;
+        }
+        formCard.classList.add('hidden');
+        successPanel.classList.add('show');
+        if (trackingEl) trackingEl.textContent = payload.tracking_code;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      })
+      .catch(function (err) {
+        console.error('[DOT] insert exception', err);
+        showAlert('ثبت درخواست با مشکل مواجه شد. لطفاً دوباره تلاش کنید.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+      });
   });
 
   form.querySelectorAll('.radio-item input').forEach(function (input) {
